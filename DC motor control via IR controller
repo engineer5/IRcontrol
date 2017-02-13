@@ -1,0 +1,74 @@
+#include <IRremote.h>
+#define t_lijevo 0xFF22DD
+#define t_desno 0xFF02FD
+#define playpause 0xFFC23D
+#define voldown 0xFFE01F
+#define volup 0xFFA857
+#define reset 0xFF6897
+
+int RECV_PIN = 11;
+int enA=10;
+int in1=7;
+int in2=4;
+
+IRrecv irrecv(RECV_PIN);
+decode_results results;
+unsigned int hash=0;
+int brzina=0;
+boolean in1_stanje=false;
+boolean in2_stanje=false;
+boolean sustav=false;
+
+void setup(){
+  irrecv.enableIRIn();
+  pinMode(enA, OUTPUT);
+  pinMode(in1, OUTPUT);
+  pinMode(in2, OUTPUT);
+}
+void pokreni(int a, int b, int c){
+  digitalWrite(in1, a);
+  digitalWrite(in2, b);
+  analogWrite(enA, c);
+}
+void loop() {
+  if (irrecv.decode(&results)) {
+    hash=results.value;
+    irrecv.resume();
+  }
+  switch(hash){
+    case t_lijevo:    
+       in1_stanje=1;
+       in2_stanje=0;
+       break;    
+    case t_desno:     
+       in1_stanje=0;
+       in2_stanje=1;
+       break;    
+    case playpause:  
+       sustav=!sustav;
+       break;    
+    case voldown:    
+       brzina-=5;
+       brzina=constrain(brzina,50,100);  
+       break;    
+    case volup:       
+       brzina+=5;  
+       brzina=constrain(brzina,50,100);
+       break;
+    case reset:
+       in1_stanje=0;
+       in2_stanje=0;
+       brzina=0;
+       break;
+    default:          
+       break;                              
+  }
+  if(sustav == 1){
+    pokreni(in1_stanje, in2_stanje, brzina);
+  }
+  else if(sustav == 0){
+    pokreni(0,0,0);
+  }
+  hash=0;
+  delay(100);
+}
